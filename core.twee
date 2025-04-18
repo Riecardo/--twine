@@ -12,7 +12,7 @@ core
 }
 
 
-:: 0 {"position":"900,375","size":"100,100"}
+:: 0 {"position":"900,300","size":"100,100"}
  (if: $willpower <= 0)[
         (set: $willpower to 0)
         你的意志力已耗尽！需要进行恢复活动。
@@ -33,7 +33,7 @@ core
 
 
 :: 1 [startup] {"position":"400,100","size":"100,100"}
-{  (set:$task to 1)
+{  (set: $task to 1)
     (set: $willpower to 20)
     (set: $max_willpower to 100)
     (set: $discipline_points to 2000)
@@ -51,7 +51,7 @@ core
         "健身" ,(a:60)
         )
         )
-    (set: $recovery_activities to (ds:
+    (set: $recovery_activities to (dm:
         "跑步" ,(a: 10),
         "冥想" ,(a: 10)
         )
@@ -102,14 +102,18 @@ Available points: (t8n:'pulse')+(t8n-time:0.4s)+(text-colour:(cond:_points > 3, 
 <==
 
 
-:: 恢复活动 {"position":"775,500","size":"100,100"}
-{
-    请选择恢复活动：
-    (for: each _activity, where _activity is in $recovery_activities)[
-        [[_activity|进行恢复活动]]
+:: 恢复活动 {"position":"700,500","size":"100,100"}
+   请选择恢复活动：
+{     (for: each _activity, ... (dm-names:$recovery_activities))[
+     <h4>(print:_activity)</h4>
+     (link: "选择"+_activity)[
+    (set: $activity to _activity) // 将循环变量存入全局变量
+    (goto: "进行恢复活动")              // 跳转到目标段落
+   ]
     ]
-    [[返回主菜单|0]]
-}
+    }
+    <br>[[返回主菜单|0]]
+
 
 
 :: 执行任务 {"position":"900,500","size":"100,100"}
@@ -128,7 +132,7 @@ Available points: (t8n:'pulse')+(t8n-time:0.4s)+(text-colour:(cond:_points > 3, 
 
 
 
-:: 执行意志力判定 [task] {"position":"850,625","size":"100,100"}
+:: 执行意志力判定 [task] {"position":"900,700","size":"100,100"}
 {
     (set: _threshold to $task_thresholds's ($task)'s 1st)
     
@@ -194,13 +198,13 @@ Available points: (t8n:'pulse')+(t8n-time:0.4s)+(text-colour:(cond:_points > 3, 
     
 
     
-    [[返回主菜单|0]]
+   (button:) [[返回主菜单|0]]
 
 
 
-:: 进行恢复活动 [activity] {"position":"587.5,625","size":"100,100"}
+:: 进行恢复活动 [activity] {"position":"700,700","size":"100,100"}
 {
-    (set: _recovery to $recovery_activities's (activity))
+    (set: _recovery to $recovery_activities's ($activity)'s 1st)
     (set: $willpower to (min: $max_willpower, $willpower + _recovery))
     (set: $discipline_points to it + _recovery)
     
@@ -208,9 +212,9 @@ Available points: (t8n:'pulse')+(t8n-time:0.4s)+(text-colour:(cond:_points > 3, 
     - 新增自律点数: _recovery
     
     (set: _new_level to 0)
-    (for: each _i, _th in $discipline_thresholds)[
-        (if: $discipline_points >= _th)[
-            (set: _new_level to _i)
+    (for: each _index where _index is in (range: 0, (count: $discipline_thresholds) - 1))[
+        (if: $discipline_points >= $discipline_thresholds's (_index + 1))[
+            (set: _new_level to _index + 1)
         ]
     ]
     

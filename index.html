@@ -9,7 +9,7 @@
 </head>
 <body>
 <tw-story><noscript><tw-noscript>JavaScript needs to be enabled to play core.</tw-noscript></noscript></tw-story>
-<tw-storydata name="core" startnode="8" creator="Twine" creator-version="2.10.0" format="Harlowe" format-version="3.3.9" ifid="546BBAE5-A8AF-4F08-9CBE-5C5EDECE151A" options="" tags="" zoom="1" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style><script role="script" id="twine-user-script" type="text/twine-javascript"></script><tw-passagedata pid="1" name="0" tags="" position="900,375" size="100,100"> (if: $willpower &lt;= 0)[
+<tw-storydata name="core" startnode="8" creator="Twine" creator-version="2.10.0" format="Harlowe" format-version="3.3.9" ifid="546BBAE5-A8AF-4F08-9CBE-5C5EDECE151A" options="" tags="" zoom="1" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style><script role="script" id="twine-user-script" type="text/twine-javascript"></script><tw-passagedata pid="1" name="0" tags="" position="750,600" size="100,100"> (if: $willpower &lt;= 0)[
         (set: $willpower to 0)
         你的意志力已耗尽！需要进行恢复活动。
         [[恢复活动]]
@@ -25,7 +25,7 @@
     [[恢复活动]]
     [[查看状态]]
 
-</tw-passagedata><tw-passagedata pid="2" name="1" tags="startup" position="400,100" size="100,100">{  (set:$task to 1)
+</tw-passagedata><tw-passagedata pid="2" name="1" tags="startup" position="200,775" size="100,100">{  (set: $task to 1)
     (set: $willpower to 20)
     (set: $max_willpower to 100)
     (set: $discipline_points to 2000)
@@ -43,18 +43,22 @@
         &quot;健身&quot; ,(a:60)
         )
         )
-    (set: $recovery_activities to (ds:
+    (set: $recovery_activities to (dm:
         &quot;跑步&quot; ,(a: 10),
         &quot;冥想&quot; ,(a: 10)
         )
         )
-}</tw-passagedata><tw-passagedata pid="3" name="恢复活动" tags="" position="775,500" size="100,100">{
-    请选择恢复活动：
-    (for: each _activity, where _activity is in $recovery_activities)[
-        [[_activity|进行恢复活动]]
+}</tw-passagedata><tw-passagedata pid="3" name="恢复活动" tags="" position="700,775" size="100,100">   请选择恢复活动：
+{     (for: each _activity, ... (dm-names:$recovery_activities))[
+     &lt;h4&gt;(print:_activity)&lt;/h4&gt;
+     (link: &quot;选择&quot;+_activity)[
+    (set: $activity to _activity) // 将循环变量存入全局变量
+    (goto: &quot;进行恢复活动&quot;)              // 跳转到目标段落
+   ]
     ]
-    [[返回主菜单|0]]
-}</tw-passagedata><tw-passagedata pid="4" name="执行任务" tags="" position="900,500" size="100,100">{
+    }
+    &lt;br&gt;[[返回主菜单|0]]
+</tw-passagedata><tw-passagedata pid="4" name="执行任务" tags="" position="900,775" size="100,100">{
     请选择要执行的任务：
      (for: each _task, ... (dm-names:$task_thresholds))[
      &lt;h4&gt;(print:_task)&lt;/h4&gt;
@@ -66,7 +70,7 @@
     ]
     [[返回主菜单|0]]
 }
-</tw-passagedata><tw-passagedata pid="5" name="查看状态" tags="" position="1025,500" size="100,100">
+</tw-passagedata><tw-passagedata pid="5" name="查看状态" tags="" position="1075,650" size="100,100">
     自律度等级划分：
     | 等级 | 名称    | 所需点数 |
 (b4r:&quot;ridge&quot;,&quot;none&quot;,&quot;none&quot;)+(b4r-colour:white)[     | 0    | 木僵       | 0        |
@@ -81,8 +85,8 @@
     
 
     
-    [[返回主菜单|0]]
-</tw-passagedata><tw-passagedata pid="6" name="执行意志力判定" tags="task" position="850,625" size="100,100">{
+   (button:) [[返回主菜单|0]]
+</tw-passagedata><tw-passagedata pid="6" name="执行意志力判定" tags="task" position="900,900" size="100,100">{
     (set: _threshold to $task_thresholds&#39;s ($task)&#39;s 1st)
     
 &lt;!--(if: $willpower &lt; _threshold)[
@@ -128,18 +132,18 @@
         (text-colour:red)[判定失败！无法执行此任务。] 
         &lt;br&gt; [[返回主菜单|0]]
     ]
-}</tw-passagedata><tw-passagedata pid="7" name="进行恢复活动" tags="activity" position="587.5,625" size="100,100">{
-    (set: _recovery to $recovery_activities&#39;s (activity))
+}</tw-passagedata><tw-passagedata pid="7" name="进行恢复活动" tags="activity" position="700,900" size="100,100">{
+    (set: _recovery to $recovery_activities&#39;s ($activity)&#39;s 1st)
     (set: $willpower to (min: $max_willpower, $willpower + _recovery))
     (set: $discipline_points to it + _recovery)
     
-    你进行了活动，恢复了 _recovery 点意志力！
-    - 新增自律点数: _recovery
+    (text-colour:lime)[你进行了活动，恢复了 _recovery 点意志力！]
+    &lt;br&gt;(自律点数: +_recovery)
     
     (set: _new_level to 0)
-    (for: each _i, _th in $discipline_thresholds)[
-        (if: $discipline_points &gt;= _th)[
-            (set: _new_level to _i)
+    (for: each _index where _index is in (range: 0, (count: $discipline_thresholds) - 1))[
+        (if: $discipline_points &gt;= $discipline_thresholds&#39;s (_index + 1))[
+            (set: _new_level to _index + 1)
         ]
     ]
     
@@ -147,31 +151,32 @@
         (set: $discipline_level to _new_level)
         恭喜！你的自律度提升到 $discipline_level ($discipline_levels&#39;s $discipline_level)！
     ]
-    
+}    
+
     [[返回主菜单|0]]
-}</tw-passagedata><tw-passagedata pid="8" name="start" tags="" position="500,300" size="100,100">
+</tw-passagedata><tw-passagedata pid="8" name="start" tags="" position="475,650" size="100,100">
 =&gt;&lt;=
 #Start
 (button:)[[开始游戏-&gt;0]]
 (button:)[[创建自己的角色-&gt;2]] ^^(Warning! Advanced players only!)^^
-&lt;==</tw-passagedata><tw-passagedata pid="9" name="2" tags="" position="600,100" size="100,100">很好!为了 **设置你的属性**, 你必须决定每一项的点数！点击`[+1]` 来增加点数。
+&lt;==</tw-passagedata><tw-passagedata pid="9" name="2" tags="" position="475,800" size="100,100">很好!为了 **设置你的属性**, 你必须决定每一项的点数！点击`[+1]` 来增加点数。
 
 \(set:
-   _SP to 21, _DX to 25, _CN to 19, _FL to 20, _PC to 18, _UF to 20,
+    _CN to 19, _FL to 20, _PC to 18, _UF to 20,
    _points to 15, _rerun to (rerun:?skillBoard))\
 
 |skillBoard&gt;[
 \(set:_plusLink to (cond:_points &gt; 0, (link:&quot;`[+1]`&quot;),(hidden:)), _minusLink to (link:&quot;`[-1]`&quot;))\
 |=
-Swiftness:
-Ducksterity:
+Willpower:
+Disciplinepoints:
 Constitution:
 Flight:
 Perceptiveness:
 Unflappability:
 =|
-_SP _plusLink[(set:_SP to it + 1, _points to it - 1)_rerun] (if:_SP &gt; 0)[_minusLink[(set:_SP to it - 1, _points to it + 1)_rerun]]
-_DX _plusLink[(set:_DX to it + 1, _points to it - 1)_rerun] (if:_DX &gt; 0)[_minusLink[(set:_DX to it - 1, _points to it + 1)_rerun]]
+$willpower _plusLink[(set:$willpower to it + 1, _points to it - 1)_rerun] (if:$willpower &gt; 0)[_minusLink[(set:$willpower to it - 1, _points to it + 1)_rerun]]
+$discipline_points _plusLink[(set:$discipline_points to it + 1, _points to it - 1)_rerun] (if:$discipline_points &gt; 0)[_minusLink[(set:$discipline_points to it - 1, _points to it + 1)_rerun]]
 _CN _plusLink[(set:_CN to it + 1, _points to it - 1)_rerun] (if:_CN &gt; 0)[_minusLink[(set:_CN to it - 1, _points to it + 1)_rerun]]
 _FL _plusLink[(set: _FL to it + 1, _points to it - 1)_rerun] (if:_FL &gt; 0)[_minusLink[(set:_FL to it - 1, _points to it + 1)_rerun]]
 _PC _plusLink[(set: _PC to it + 1, _points to it - 1)_rerun] (if:_PC &gt; 0)[_minusLink[(set:_PC to it - 1, _points to it + 1)_rerun]]
