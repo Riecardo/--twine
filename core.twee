@@ -1,0 +1,223 @@
+:: StoryTitle
+core
+
+
+:: StoryData
+{
+  "ifid": "546BBAE5-A8AF-4F08-9CBE-5C5EDECE151A",
+  "format": "Harlowe",
+  "format-version": "3.3.9",
+  "start": "start",
+  "zoom": 1
+}
+
+
+:: 0 {"position":"900,375","size":"100,100"}
+ (if: $willpower <= 0)[
+        (set: $willpower to 0)
+        你的意志力已耗尽！需要进行恢复活动。
+        [[恢复活动]]
+    ]
+    
+    当前状态：
+    - 意志力：$willpower/$max_willpower
+    - 自律度等级：(print:$discipline_levels's ($discipline_level))$discipline_level
+    - 自律点数：$discipline_points (下一等级需要：(print:$discipline_thresholds's ($discipline_level + 1)))
+    
+    请选择：
+    [[执行任务]]
+    [[恢复活动]]
+    [[查看状态]]
+
+
+
+
+:: 1 [startup] {"position":"400,100","size":"100,100"}
+{  (set:$task to 1)
+    (set: $willpower to 20)
+    (set: $max_willpower to 100)
+    (set: $discipline_points to 2000)
+    (set: $discipline_level to 4)
+    (set: $discipline_levels to (a: 
+        "木僵", "浑噩", "闲鱼", "从众", "自主", "自我", "朝乾夕惕", "令行禁止"
+    ))
+    (set: $discipline_thresholds to (a: 0, 100, 500, 1000, 3000, 5000, 10000, 20000))
+    (set: $task_thresholds to (dm: 
+        "吃饭" , (a:20),
+        "洗漱" , (a:30),
+        "阅读" , (a:50),
+        "学习" ,(a:70),
+        "写作" , (a:80),
+        "健身" ,(a:60)
+        )
+        )
+    (set: $recovery_activities to (ds:
+        "跑步" ,(a: 10),
+        "冥想" ,(a: 10)
+        )
+        )
+}
+
+
+:: 2 {"position":"600,100","size":"100,100"}
+很好!为了 **设置你的属性**, 你必须决定每一项的点数！点击`[+1]` 来增加点数。
+
+\(set:
+   _SP to 21, _DX to 25, _CN to 19, _FL to 20, _PC to 18, _UF to 20,
+   _points to 15, _rerun to (rerun:?skillBoard))\
+
+|skillBoard>[
+\(set:_plusLink to (cond:_points > 0, (link:"`[+1]`"),(hidden:)), _minusLink to (link:"`[-1]`"))\
+|=
+Swiftness:
+Ducksterity:
+Constitution:
+Flight:
+Perceptiveness:
+Unflappability:
+=|
+_SP _plusLink[(set:_SP to it + 1, _points to it - 1)_rerun] (if:_SP > 0)[_minusLink[(set:_SP to it - 1, _points to it + 1)_rerun]]
+_DX _plusLink[(set:_DX to it + 1, _points to it - 1)_rerun] (if:_DX > 0)[_minusLink[(set:_DX to it - 1, _points to it + 1)_rerun]]
+_CN _plusLink[(set:_CN to it + 1, _points to it - 1)_rerun] (if:_CN > 0)[_minusLink[(set:_CN to it - 1, _points to it + 1)_rerun]]
+_FL _plusLink[(set: _FL to it + 1, _points to it - 1)_rerun] (if:_FL > 0)[_minusLink[(set:_FL to it - 1, _points to it + 1)_rerun]]
+_PC _plusLink[(set: _PC to it + 1, _points to it - 1)_rerun] (if:_PC > 0)[_minusLink[(set:_PC to it - 1, _points to it + 1)_rerun]]
+_UF _plusLink[(set: _UF to it + 1, _points to it - 1)_rerun] (if:_UF > 0)[_minusLink[(set:_UF to it - 1, _points to it + 1)_rerun]]
+|==|
+
+Available points: (t8n:'pulse')+(t8n-time:0.4s)+(text-colour:(cond:_points > 3, white, _points > 0, yellow,red))[''_points'']]
+ * (link-rerun:"I want more points")[{
+  (t8n:"zoom")+(t8n-time:0.4s)(dialog:"You want more points? Sure! Have a bunch more. Attributes don't do anything in this game, so who cares?","Thanks")
+  (set:_points to it + (random:4,12))
+  _rerun
+}]
+ * [[I'm ready to go!->0]]
+
+
+:: start {"position":"500,300","size":"100,100"}
+
+=><=
+#Start
+(button:)[[开始游戏->0]]
+(button:)[[创建自己的角色->2]] ^^(Warning! Advanced players only!)^^
+<==
+
+
+:: 恢复活动 {"position":"775,500","size":"100,100"}
+{
+    请选择恢复活动：
+    (for: each _activity, where _activity is in $recovery_activities)[
+        [[_activity|进行恢复活动]]
+    ]
+    [[返回主菜单|0]]
+}
+
+
+:: 执行任务 {"position":"900,500","size":"100,100"}
+{
+    请选择要执行的任务：
+     (for: each _task, ... (dm-names:$task_thresholds))[
+     <h4>(print:_task)</h4>
+     (link: "选择"+_task)[
+    (set: $task to _task) // 将循环变量存入全局变量
+    (goto: "执行意志力判定")              // 跳转到目标段落
+   ]
+   <br>
+    ]
+    [[返回主菜单|0]]
+}
+
+
+
+:: 执行意志力判定 [task] {"position":"850,625","size":"100,100"}
+{
+    (set: _threshold to $task_thresholds's ($task)'s 1st)
+    
+<!--(if: $willpower < _threshold)[
+        你的意志力不足，无法执行此任务！<br>
+        ]-->
+    
+    (set: _base_roll to (random: 0, 20))
+    (set: _discipline_bonus to $discipline_level * 5)
+    (set: _total to _base_roll + _discipline_bonus)
+    <br>
+    意志力判定：<br>
+    - 基础骰子: _base_roll (0-20)<br>
+    - 自律加成: _discipline_bonus (等级 $discipline_level × 5)<br>
+    - 总分: _total
+    <br>    
+    (text-colour:yellow)["$task"需要 _threshold 点意志力]
+    
+    (if: _total >= _threshold)[
+        (text-colour:lime)[<br>判定成功！执行任务中...]
+        
+        (set: _willpower_cost to _threshold * (10 - $discipline_level) / 10)
+        (set: $willpower to it - _willpower_cost)
+        (set: $discipline_points to it + _willpower_cost)
+        <br>
+        - 消耗意志力: _willpower_cost<br>
+        - 新增自律点数: _willpower_cost
+        
+        (set: _new_level to 0)
+       (for: each _index where _index is in (range: 0, (count: $discipline_thresholds) - 1))[
+            (if: $discipline_points >= $discipline_thresholds's (_index + 1))[
+                (set: _new_level to _index + 1)
+            ]
+        ]
+        
+        (if: _new_level > $discipline_level)[
+            (set: $discipline_level to _new_level)
+            <br>恭喜！你的自律度提升了！ 
+        ]
+        <br>
+        [[返回主菜单|0]]
+    ]
+    (else:)[<br>
+        (text-colour:red)[判定失败！无法执行此任务。] 
+        <br> [[返回主菜单|0]]
+    ]
+}
+
+
+:: 查看状态 {"position":"1025,500","size":"100,100"}
+
+    自律度等级划分：
+    | 等级 | 名称    | 所需点数 |
+(b4r:"ridge","none","none")+(b4r-colour:white)[     | 0    | 木僵       | 0        |
+    | 1    | 浑噩       | 100    |
+    | 2    | 闲鱼       | 500    |
+    | 3    | 从众       | 1000  |
+    | 4    | 自主       | 3000  |
+    | 5    | 自我       | 5000  |
+    | 6    | 朝乾夕惕| 10000|
+    | 7    | 令行禁止| 20000|
+    ]
+    
+
+    
+    [[返回主菜单|0]]
+
+
+
+:: 进行恢复活动 [activity] {"position":"587.5,625","size":"100,100"}
+{
+    (set: _recovery to $recovery_activities's (activity))
+    (set: $willpower to (min: $max_willpower, $willpower + _recovery))
+    (set: $discipline_points to it + _recovery)
+    
+    你进行了活动，恢复了 _recovery 点意志力！
+    - 新增自律点数: _recovery
+    
+    (set: _new_level to 0)
+    (for: each _i, _th in $discipline_thresholds)[
+        (if: $discipline_points >= _th)[
+            (set: _new_level to _i)
+        ]
+    ]
+    
+    (if: _new_level > $discipline_level)[
+        (set: $discipline_level to _new_level)
+        恭喜！你的自律度提升到 $discipline_level ($discipline_levels's $discipline_level)！
+    ]
+    
+    [[返回主菜单|0]]
+}
